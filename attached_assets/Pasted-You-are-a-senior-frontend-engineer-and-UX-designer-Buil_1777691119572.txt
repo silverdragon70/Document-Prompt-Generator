@@ -1,0 +1,151 @@
+You are a senior frontend engineer and UX designer.
+
+Build a fully functional, mobile-friendly HTML web app that helps users design document formatting systems and generate an AI prompt to format any text into a styled document.
+
+🎯 Goal:
+
+The app should allow users to visually select formatting options, then generate a final AI prompt that can transform any raw text into a professionally formatted document.
+
+---
+
+🧱 Core Features:
+
+1. Formatting Elements (each as a collapsible section):
+
+- Header / Footer
+- Chapter Header (Running Header)
+- Section Header Bar
+- Heading Hierarchy (H1–H3)
+- Callout Boxes (Objectives / Clinical Pearl)
+- Tables (Styled)
+- Body Text
+- Abstract Block
+- Keywords Section
+- Grid / Spacing System
+
+➕ Add additional smart elements:
+
+- Numbered lists / bullet styles
+- Highlighted quotes
+- Image placeholders
+- Dividers / separators
+- Page numbering styles
+
+---
+
+🎨 For EACH element:
+
+Provide:
+
+1. Toggle (enable/disable)
+2. Style options:
+   - Font family
+   - Font size
+   - Font weight
+   - Text color
+   - Background color
+   - Alignment
+   - Spacing (margin/padding)
+3. “Let AI decide” toggle
+
+---
+
+🧾 Visual Explanation (IMPORTANT):
+
+For each element:
+
+- Show a small sketch preview (CSS mock) explaining what it looks like
+  Example:
+  - H1 → large bold title
+  - Section header → colored bar
+  - Callout → boxed content
+
+Use simple styled divs as previews.
+
+---
+
+🎨 Color System:
+
+- Provide predefined color palettes:
+  - Medical (blue/green)
+  - Academic (black/gray)
+  - Modern minimal
+  - Warm tones
+- Option: “Auto palette (AI decides)”
+
+---
+
+📏 Layout Controls:
+
+- Page margins (top/bottom/left/right sliders)
+- Line spacing
+- Paragraph spacing
+- Content width (fixed / fluid)
+
+---
+
+📤 Output Settings:
+
+User selects output format:
+
+- PDF
+- Word (.docx)
+- HTML
+- Markdown
+
+---
+
+🧠 Prompt Generator:
+
+At the bottom:
+Generate a dynamic AI prompt that includes:
+
+- All selected formatting rules
+- Style definitions
+- Output format
+- Instruction to convert raw text into formatted document
+
+Make the prompt:
+
+- Clean
+- Structured
+- Ready to paste into AI tools
+
+---
+
+📱 UI/UX Requirements:
+
+- Fully responsive (mobile-first)
+- Clean modern design
+- Soft colors, not harsh
+- Large readable fonts
+- Sections collapsible (accordion style)
+- Sticky "Generate Prompt" button
+
+---
+
+⚙️ Tech Requirements:
+
+- Pure HTML + CSS + Vanilla JS (no frameworks)
+- Use modern CSS (flexbox/grid)
+- No external dependencies
+
+---
+
+🧩 Bonus:
+
+- Add “Export settings as JSON”
+- Add “Import settings”
+- Add “Reset to default”
+
+---
+
+📦 Output:
+
+Return ONE complete HTML file with:
+
+- Embedded CSS
+- Embedded JS
+- Ready to run
+
+Make the UI polished and professional.
