@@ -9,6 +9,7 @@ import {
   DocumentPreset,
   DOCUMENT_PRESETS,
 } from "@/types/formatting";
+import { resolveFont } from "@/utils/fontMapping";
 
 const MAX_HISTORY = 30;
 
@@ -271,7 +272,7 @@ export function useFormattingState() {
 
       return (
         `  - ${el.label}:${conditionalNote}\n` +
-        `      font: ${s.fontFamily}, ${s.fontSize}, weight ${s.fontWeight}\n` +
+        `      font: ${resolveFont(s.fontFamily)}, ${s.fontSize}, weight ${s.fontWeight}\n` +
         `      color: ${s.color}${s.backgroundColor !== "transparent" ? `, background: ${s.backgroundColor}` : ""}\n` +
         `      alignment: ${s.textAlign}, line-height ${s.lineHeight}\n` +
         `      spacing: margin-bottom ${s.marginBottom}` +
@@ -288,6 +289,10 @@ export function useFormattingState() {
 
     const paletteBlock = `## COLOR PALETTE
 ${COLOR_PALETTES[state.palette].label} — ${COLOR_PALETTES[state.palette].description}`;
+
+    const bodyFontFamily = state.elements.body?.style.fontFamily || DEFAULT_STYLE.fontFamily;
+    const primaryFont = bodyFontFamily.split(',')[0].trim();
+    const resolvedFont = resolveFont(bodyFontFamily);
 
     let reportlabRulesBlock = `## REPORTLAB PDF SPECIFIC RULES
 **Rule 1: Never use Unicode subscript or superscript characters**
@@ -384,6 +389,16 @@ col_widths = [USABLE_WIDTH / n] * n   # where n = number of columns
 
 
 Apply all rules to every element in the document. No exceptions.`;
+
+    // Add chosen font info
+    reportlabRulesBlock += `
+
+## CHOSEN FONT
+The user selected: "${primaryFont}"
+In ReportLab, use: "${resolvedFont}" for ALL text elements — headings, body,
+tables, bullet lists, callout boxes, and canvas.setFont() calls.
+Do NOT use any other font name anywhere in the code.
+`;
 
     let languageBlock = "";
     if (state.languageDirection === "auto") {
