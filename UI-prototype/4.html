@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#fdf8ff",
+                        "on-tertiary-container": "#fffbff",
+                        "surface-container-low": "#f7f1ff",
+                        "surface-container-high": "#ebe6f4",
+                        "tertiary-container": "#b35e00",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#484555",
+                        "on-secondary-fixed-variant": "#763315",
+                        "secondary-fixed-dim": "#ffb599",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#cabeff",
+                        "secondary": "#934a2a",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#f1ebf9",
+                        "outline": "#797587",
+                        "inverse-on-surface": "#f4eefc",
+                        "surface": "#fdf8ff",
+                        "inverse-surface": "#312f39",
+                        "on-surface": "#1c1a24",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#1c0062",
+                        "surface-dim": "#ddd8e5",
+                        "on-tertiary-fixed-variant": "#6f3800",
+                        "on-primary-fixed-variant": "#4816cb",
+                        "surface-container-highest": "#e6e0ee",
+                        "tertiary-fixed": "#ffdcc4",
+                        "surface-variant": "#e6e0ee",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#fffbff",
+                        "outline-variant": "#c9c4d8",
+                        "on-error": "#ffffff",
+                        "primary-container": "#7757fa",
+                        "error": "#ba1a1a",
+                        "tertiary": "#8f4a00",
+                        "on-secondary-container": "#763316",
+                        "on-background": "#1c1a24",
+                        "on-secondary-fixed": "#370e00",
+                        "surface-tint": "#603ce2",
+                        "primary-fixed-dim": "#cabeff",
+                        "tertiary-fixed-dim": "#ffb780",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#e6deff",
+                        "on-tertiary-fixed": "#2f1400",
+                        "secondary-container": "#fd9e78",
+                        "primary": "#5e39e0",
+                        "background": "#fdf8ff",
+                        "secondary-fixed": "#ffdbce"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "8rem",
+                        "md": "2rem",
+                        "lg": "4rem",
+                        "gutter": "1.5rem",
+                        "margin": "2rem",
+                        "sm": "1rem",
+                        "xs": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "h2": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "h1": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "h2": ["32px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                        "label-sm": ["14px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "h1": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .canvas-shadow {
+            box-shadow: 0 10px 40px -10px rgba(96, 60, 226, 0.08);
+        }
+        .vibrant-glow {
+            box-shadow: 0 0 40px -10px rgba(94, 57, 224, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-fixed">
+<!-- TopAppBar Shell (Suppressed for focused preview, replaced with floating back button) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin h-20 bg-surface/80 backdrop-blur-md">
+<button class="group flex items-center gap-xs px-sm py-xs rounded-full hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined text-primary" data-icon="arrow_back">arrow_back</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-primary transition-colors">Back to Editor</span>
+</button>
+<div class="flex items-center gap-sm">
+<button class="px-md py-xs rounded-full bg-surface-container-highest font-label-sm text-label-sm text-on-surface-variant hover:bg-primary-fixed-dim transition-colors">
+                Share Link
+            </button>
+<button class="px-md py-xs rounded-full bg-primary text-on-primary font-label-sm text-label-sm hover:opacity-90 transition-opacity flex items-center gap-xs">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                Export PDF
+            </button>
+</div>
+</header>
+<main class="min-h-screen pt-32 pb-xl px-gutter">
+<div class="max-w-4xl mx-auto">
+<!-- Document Meta -->
+<div class="mb-lg text-center">
+<span class="inline-block px-sm py-1 bg-secondary-fixed text-on-secondary-fixed text-[12px] font-bold uppercase tracking-widest rounded-full mb-sm">
+                    Design Commentary
+                </span>
+<h1 class="font-h1 text-h1 text-on-surface mb-xs tracking-tight">The Future of Minimalist Digital Workspaces</h1>
+<div class="flex items-center justify-center gap-md text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-sm text-label-sm">October 24, 2023</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="timer">timer</span>
+<span class="font-label-sm text-label-sm">8 min read</span>
+</div>
+</div>
+</div>
+<!-- Main Document Canvas -->
+<article class="bg-surface-container-lowest rounded-[32px] p-lg md:p-xl canvas-shadow border border-outline-variant/30">
+<!-- Hero Image with Neomorphic Frame -->
+<figure class="mb-lg overflow-hidden rounded-2xl vibrant-glow">
+<img alt="Future digital workspace" class="w-full aspect-[16/9] object-cover hover:scale-105 transition-transform duration-700" data-alt="A cinematic, ultra-wide 8K photograph of a clean, minimalist digital workspace at sunset. Soft, warm golden light filters through a large window, illuminating a sleek glass desk with a single high-end laptop. The background is a blurred, high-end architectural interior with soft purple and orange gradients. The mood is tranquil, professional, and optimistic, reflecting a high-signal creative environment." src="https://lh3.googleusercontent.com/aida/ADBb0ujzPQfHLN_lXcjeTWTJW34pzqYMzhC3K0G-mMwkEr8qdeHxFNqFs1q5JIqdPuld2sDAzfkLqvMw8-OH4k5HCUCHQ8b87JaNCbLGgLK1-RIaf7_scMsrn68nv_b2fbhCXy7SQfR0tNMlYxYN9Kt6-m2dHtchX0R02Wl4U-8RlRXMqVBAiNwrvqd7DhaFkTGa9GI1wyOjs1S_17t0AJkJln4YBKHAfr2NRuOoGjWWIpalEQSjKYjna0Am_1wC_PoRdivwFanvtlYmGw"/>
+<figcaption class="mt-sm px-xs font-label-sm text-label-sm italic text-on-surface-variant text-center">
+                        Fig 1.0 — The convergence of physical minimalism and digital clarity.
+                    </figcaption>
+</figure>
+<!-- Document Content -->
+<div class="space-y-md font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+<p class="first-letter:text-h1 first-letter:font-h1 first-letter:text-primary first-letter:mr-xs first-letter:float-left">
+                        As digital product builders, we often find ourselves overwhelmed by the sheer volume of "noise" in our daily tools. The transition toward minimalist workspaces isn't just an aesthetic choice; it's a cognitive necessity. By reducing the visual friction between the user and their content, we unlock a higher state of focus, often referred to as 'The Flow'.
+                    </p>
+<h2 class="font-h2 text-h2 text-on-surface pt-sm border-l-4 border-primary pl-md">The Philosophy of Soft-UI</h2>
+<p>
+                        In this new paradigm, we leverage "Soft Neomorphism." Unlike the rigid, skeletal layouts of early web design, these interfaces feel physically integrated. They use tonal layering—subtle shifts in background color—rather than heavy borders to define boundaries.
+                    </p>
+<!-- Two Column Feature / Bento Style Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md my-lg">
+<div class="bg-surface-container-low p-md rounded-2xl border border-primary/5">
+<img alt="Visual Precision" class="w-full h-48 object-cover rounded-xl mb-sm" data-alt="A macro photograph showing a detailed, minimalist UI component with soft purple shadows on a white background. The lighting is clinical yet warm, highlighting a perfectly rounded button and a subtle 1px border. The palette is dominated by soft lavender and deep violet accents, creating a feeling of technical precision and artistic elegance." src="https://lh3.googleusercontent.com/aida/ADBb0uhni_jbvIO1EpWHwvvEJzAd_DUTLMEHfY1-JG3I4XQw0WjBaoeH4RhMmrsxRlfUij-zwE7KG3uJVX5C7CUzus8tveBHethqbpCcRxFHXYhZbhzUs8KBL7wf6-OvCehP93PtZ0AqQ9bPcZ-cRy1oFVmgMkmxeh7F_ylvTH0crsv8Qef1suHkN61O6Zd1glXipOE0d3-PBZiqSoX5KEBaZl461McCNg7Qy4PTcAb9YW5wgctXt5sqJ5EgD8nqM3Ft5rcrGOMNRbKyqw"/>
+<h3 class="font-h2 text-[24px] text-on-surface mb-xs">Visual Precision</h3>
+<p class="font-body-md text-body-md">Utilizing a 12-column fixed grid ensures that every element has a logical home, reducing cognitive load for the reader.</p>
+</div>
+<div class="bg-surface-container-low p-md rounded-2xl border border-primary/5">
+<img alt="Creative Energy" class="w-full h-48 object-cover rounded-xl mb-sm" data-alt="Abstract digital art featuring fluid, organic shapes in vibrant shades of primary purple and soft orange. The background is a clean white, and the shapes appear to have a soft, 3D depth with ambient shadows. The mood is energetic, modern, and inspiring, perfectly capturing a vibrant minimalist aesthetic for digital professionals." src="https://lh3.googleusercontent.com/aida/ADBb0uj9melH_mEU7lU5WVxr-cr0pS2-nE6hGaaUjt4SFSDk2SdglutzA-Aajp_mrKqq8375VYAQ2qsfMPGoBhNymCgAnis_z4P9GsWQjW4lKDOu3Ze7R1Oak4km0v6xC7JYbgLVYr44XZUa-wWmVjDQOYV8_AIT5ERUKdVSDgmZbpAivkPI2JxFlb-HKfmsFjqR85QiVkmNEV_xwHGew3yoduv8NAoIa_srmV9FNgwBWLmm55yOqlnzhLNr57yCBZer2v86rTKQGv8nhpY"/>
+<h3 class="font-h2 text-[24px] text-on-surface mb-xs">Creative Energy</h3>
+<p class="font-body-md text-body-md">Vibrant accent colors like primary purple are used sparingly to guide the eye and inject personality into clinical layouts.</p>
+</div>
+</div>
+<p>
+                        The goal is always high signal-to-noise ratio. When we look at a technical document or a blog post, we shouldn't see the tool; we should see the information.
+                    </p>
+<!-- Blockquote with Accent -->
+<blockquote class="bg-primary/5 p-lg rounded-3xl border-l-8 border-primary my-lg">
+<p class="italic text-on-primary-fixed-variant font-h2 text-[28px] leading-tight">
+                            "Minimalism is not the lack of something. It is simply the perfect amount of something."
+                        </p>
+<cite class="block mt-sm font-label-sm text-label-sm text-primary uppercase tracking-widest">— Nicholas Burroughs</cite>
+</blockquote>
+<h2 class="font-h2 text-h2 text-on-surface pt-sm">Designing for the Next Generation</h2>
+<p>
+                        The target audience values clarity. Digital product builders and creative professionals are looking for environments that respect their attention. This means aggressive spacing—internal card padding of 32px or more—and plenty of whitespace between sections.
+                    </p>
+<div class="grid grid-cols-3 gap-sm my-lg">
+<div class="aspect-square rounded-xl overflow-hidden shadow-sm">
+<img alt="Workspace Detail 1" class="w-full h-full object-cover" data-alt="A clean, close-up shot of a minimalist home office setup with a high-end keyboard and a single designer plant. The lighting is soft and natural, coming from a side window. The color palette features whites, light grays, and a pop of green from the plant, creating a peaceful and productive atmosphere." src="https://lh3.googleusercontent.com/aida/ADBb0ujZqtbNkd-v7QDH7_m-VWH6XDe5BSciW3xKs7YGnxpuvqIcFY9--jl9n6wCaXZ_Pi9y9TAp9SKbE3AsqgJ1iddcqfVlCSD7mhkA7vpD8BQz9-lQWAe8eiqYYskivvi2Zni8vWsGM6gw99n6aPYrIIOBruWAzRAM09u7ZexZEBAx1dsAQYYykiEfCtWYZi74UuUeMZgjtJLcJSKAvPHJPC_7aDFLPvkJ2CWFMj2IvFksZsHcE3eLLUd93PrADf33nvBb11uQORX7hHw"/>
+</div>
+<div class="aspect-square rounded-xl overflow-hidden shadow-sm">
+<img alt="Workspace Detail 2" class="w-full h-full object-cover" data-alt="A modern office lobby with minimalist furniture and a large, glowing digital screen displaying abstract purple art. The floor is a polished light gray concrete, and the ceiling features recessed soft-white lighting. The mood is futuristic and calm, with a strong focus on clean lines and sophisticated technology." src="https://lh3.googleusercontent.com/aida/ADBb0uhm6Dt8AnrHPHVE8nLuboRZifXEs1xtIgTH2rZ8Nzc2-ldRIRqkf1DDJY6Q-7dRzEPteLkddLqbWzK1Tp9JjYSmxJpAVeWpkLO9XXdOwsM3WCagzV6IrwbOCD4LC61sU2KG9AnsECdqjpeC-m2T_rMOoUYjuldbLZEpz2eqUW8VRdJ-krOGMaIqzGNLe1Eyv4X68hGbh77gKwNqi5Wr7Ez8AopVt5-MbLzRF95cEVORaByLLOsEdE_8zK7nrQnAQYYrFEiN3xK_dN8"/>
+</div>
+<div class="aspect-square rounded-xl overflow-hidden shadow-sm flex items-center justify-center bg-primary text-on-primary">
+<div class="text-center">
+<span class="material-symbols-outlined text-[48px]" data-icon="auto_awesome">auto_awesome</span>
+<p class="font-label-sm text-[10px] mt-xs uppercase">Design Focused</p>
+</div>
+</div>
+</div>
+<p>
+                        In conclusion, the 'Preview' state isn't just a static view. It's a testament to the power of structured typography and intentional spacing. By leveraging the DocFormatter system, creators can ensure their message is never lost in translation.
+                    </p>
+</div>
+<!-- Footer of Document -->
+<footer class="mt-xl pt-lg border-t border-outline-variant/30 flex flex-col md:flex-row justify-between items-center gap-md">
+<div class="flex items-center gap-sm">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">JD</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface">Jane Designer</p>
+<p class="text-[12px] text-on-surface-variant">Lead Product Architect</p>
+</div>
+</div>
+<div class="flex gap-sm">
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="share">share</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="bookmark">bookmark</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="chat_bubble">chat_bubble</span>
+</button>
+</div>
+</footer>
+</article>
+<!-- Bottom Navigation / Next Steps -->
+<div class="mt-lg flex justify-center gap-md">
+<div class="flex items-center gap-xs text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+                    Previewing in "Vibrant Minimalist" theme
+                </div>
+</div>
+</div>
+</main>
+<!-- Floating Action for Quick Access (Suppressed as per task, but contextually relevant for a preview) -->
+<div class="fixed bottom-margin right-margin flex flex-col gap-sm">
+<button class="w-14 h-14 rounded-full bg-surface-container-lowest canvas-shadow flex items-center justify-center text-primary hover:scale-110 active:scale-95 transition-all border border-outline-variant/50">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</body></html>

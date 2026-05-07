@@ -94,7 +94,7 @@ export function LivePreview({ state }: LivePreviewProps) {
                   letterSpacing: el.h1.style.letterSpacing,
                 }}
               >
-                Advanced Formatting Systems for Modern Documents
+                The Future of Document Design
               </h1>
             )}
 
@@ -212,10 +212,10 @@ export function LivePreview({ state }: LivePreviewProps) {
                     fontWeight: el.body.style.fontWeight,
                     color: el.body.style.color,
                     lineHeight: el.body.style.lineHeight,
-                    marginBottom: el.body.style.marginBottom,
+                    marginBottom: `${layout.paragraphSpacing}px`,
                   }}
                 >
-                  Good typography is the foundation of readable, professional documents. Font selection, size hierarchy, and spacing work together to create visual rhythm that guides the reader through the content naturally and efficiently.
+                  Imagine a workflow where your visual identity is inextricably linked to your content. Our formatting engine bridges the gap between raw data and premium presentation, ensuring every report, proposal, or deck you produce feels consistent and world-class.
                 </p>
                 <p
                   style={{
@@ -224,7 +224,7 @@ export function LivePreview({ state }: LivePreviewProps) {
                     fontWeight: el.body.style.fontWeight,
                     color: el.body.style.color,
                     lineHeight: el.body.style.lineHeight,
-                    marginBottom: el.body.style.marginBottom,
+                    marginBottom: `${layout.paragraphSpacing}px`,
                   }}
                 >
                   The formatting system allows precise control over every visual element while maintaining consistency across the entire document through systematic style definitions.

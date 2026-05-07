@@ -1,13 +1,14 @@
 import { useState, useRef } from "react";
 import {
   FileText, Download, Upload, RotateCcw, Sparkles,
-  Moon, Sun, Layers, Settings2, AlignLeft,
-  Send, Undo2, Redo2, Search, X, LayoutTemplate, Palette,
+  Settings2, AlignLeft, ArrowLeft, Palette,
+  Undo2, Redo2, Search, X, LayoutTemplate, Layers,
+  Plus, Send, ChevronRight
 } from "lucide-react";
 import { useFormatting } from "@/context/FormattingContext";
-import { ElementEditor } from "@/components/ElementEditor";
+import { CompactElementRow, ElementEditPanel } from "@/components/ElementEditor";
 import { PromptOutput } from "@/components/PromptOutput";
-import { FloatingPreviewButton } from "@/components/FloatingPreviewButton";
+import { LivePreview } from "@/components/LivePreview";
 import { COLOR_PALETTES, ColorPalette, OutputFormat, DOCUMENT_PRESETS, LanguageDirection } from "@/types/formatting";
 
 const OUTPUT_FORMATS: { value: OutputFormat; label: string; desc: string; icon: string }[] = [
@@ -40,27 +41,21 @@ export function Home() {
     generatePrompt,
   } = useFormatting();
 
-  const [activeTab, setActiveTab]     = useState<Tab>("elements");
-  const [showPrompt, setShowPrompt]   = useState(false);
-  const [darkMode, setDarkMode]       = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("elements");
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  
+  const [showPrompt, setShowPrompt] = useState(false);
   const [importError, setImportError] = useState("");
-  const [search, setSearch]           = useState("");
+  const [search, setSearch] = useState("");
   const [showPresets, setShowPresets] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const elementList  = Object.values(state.elements);
-  const enabledCount = elementList.filter((e) => e.enabled).length;
+  const elementList = Object.values(state.elements);
   const filteredList = search.trim()
     ? elementList.filter((e) => e.label.toLowerCase().includes(search.toLowerCase()))
     : elementList;
 
-  const toggleDark = () => {
-    setDarkMode((d) => {
-      const next = !d;
-      document.documentElement.classList.toggle("dark", next);
-      return next;
-    });
-  };
+  const selectedElement = elementList.find(e => e.id === selectedElementId);
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,493 +69,337 @@ export function Home() {
   };
 
   return (
-    <div className="flex flex-col bg-background overflow-hidden" style={{ height: "100dvh" }}>
-
-      {/* ── Navbar — single clean row ── */}
-      <header
-        className="flex-shrink-0 flex items-center h-12 px-3 gap-2 border-b border-border bg-card z-10"
-        style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-sm flex-shrink-0">
-            <FileText size={14} className="text-primary-foreground" />
-          </div>
-          <span className="font-bold text-sm text-foreground hidden sm:block tracking-tight">
+    <div className="flex flex-col h-screen w-full bg-background overflow-hidden text-foreground antialiased relative">
+      
+      {/* ── Global Top Navbar ── */}
+      <header className="h-[60px] flex-shrink-0 flex justify-between items-center px-4 md:px-6 bg-card border-b border-border z-40 relative shadow-sm">
+        <div className="flex items-center gap-3">
+          <span className="font-extrabold text-[18px] text-primary tracking-tight">
             DocFormatter
           </span>
         </div>
 
-        <div className="flex-1" />
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={undo} disabled={!canUndo} title="Undo"
-            className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            data-testid="button-undo">
-            <Undo2 size={15} />
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-1 mr-2">
+            <button onClick={undo} disabled={!canUndo} className="p-2 rounded-xl text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30">
+              <Undo2 size={16} />
+            </button>
+            <button onClick={redo} disabled={!canRedo} className="p-2 rounded-xl text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30">
+              <Redo2 size={16} />
+            </button>
+            <button onClick={resetToDefault} className="p-2 ml-1 rounded-xl text-muted-foreground hover:bg-muted hover:text-destructive transition-colors disabled:opacity-30">
+              <RotateCcw size={16} />
+            </button>
+          </div>
+          
+          <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 text-[13px] font-bold text-muted-foreground hover:bg-muted rounded-xl transition-all">
+            Import
           </button>
-          <button onClick={redo} disabled={!canRedo} title="Redo"
-            className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            data-testid="button-redo">
-            <Redo2 size={15} />
-          </button>
-
-          <div className="w-px h-5 bg-border mx-1" />
-
-          <button onClick={exportSettings} title="Export settings"
-            className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
-            data-testid="button-export">
-            <Download size={13} />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-          <button onClick={() => fileInputRef.current?.click()} title="Import settings"
-            className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
-            data-testid="button-import">
-            <Upload size={13} />
-            <span className="hidden sm:inline">Import</span>
+          <button onClick={exportSettings} className="px-5 py-2 text-[13px] font-bold bg-primary text-primary-foreground rounded-xl shadow-md hover:opacity-90 transition-all">
+            Export
           </button>
           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
-          <button onClick={resetToDefault} title="Reset to defaults"
-            className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
-            data-testid="button-reset">
-            <RotateCcw size={13} />
-            <span className="hidden sm:inline">Reset</span>
-          </button>
-
-          <div className="w-px h-5 bg-border mx-1" />
-
-          <button onClick={toggleDark} title="Toggle dark mode"
-            className="p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
-            data-testid="button-dark-mode">
-            {darkMode ? <Sun size={14} /> : <Moon size={14} />}
-          </button>
         </div>
       </header>
 
       {importError && (
-        <div className="flex-shrink-0 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs px-4 py-2 border-b border-red-200 font-medium">
+        <div className="flex-shrink-0 bg-destructive/10 text-destructive text-[11px] px-8 py-3 border-b border-destructive/20 font-bold z-40 relative">
           ⚠ {importError}
         </div>
       )}
 
-      {/* ── Palette sub-bar — horizontal scroll on all sizes ── */}
-      <div
-        className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b border-border bg-background overflow-x-auto"
-        style={{ scrollbarWidth: "none" }}
-      >
-        <div className="flex items-center gap-1 flex-shrink-0 mr-1">
-          <Palette size={12} className="text-muted-foreground" />
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-            Theme
-          </span>
-        </div>
-        {(Object.entries(COLOR_PALETTES) as [ColorPalette, (typeof COLOR_PALETTES)[ColorPalette]][]).map(([key, pal]) => (
-          <button
-            key={key}
-            onClick={() => applyPalette(key)}
-            className="flex-shrink-0 text-[11px] px-2.5 py-1 rounded-full font-medium transition-all whitespace-nowrap"
-            style={{
-              background: state.palette === key ? "hsl(var(--primary))" : "hsl(var(--muted))",
-              color: state.palette === key ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
-              boxShadow: state.palette === key ? "0 1px 6px rgba(99,102,241,0.35)" : "none",
-            }}
-            data-testid={`palette-${key}`}
-          >
-            {pal.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Tabs ── */}
-      <div className="flex-shrink-0 flex bg-card border-b border-border">
-        {([
-          { id: "elements" as Tab, icon: Layers,    label: "Elements", count: `${enabledCount}/${elementList.length}` as string | undefined },
-          { id: "layout"   as Tab, icon: Settings2, label: "Layout",   count: undefined as string | undefined },
-          { id: "output"   as Tab, icon: AlignLeft, label: "Output",   count: undefined as string | undefined },
-        ]).map(({ id, icon: Icon, label, count }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all border-b-2"
-            style={{
-              borderBottomColor: activeTab === id ? "hsl(var(--primary))" : "transparent",
-              color: activeTab === id ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-              background: activeTab === id ? "hsl(var(--primary) / 0.05)" : "transparent",
-            }}
-            data-testid={`tab-${id}`}
-          >
-            <Icon size={13} />
-            {label}
-            {count && (
-              <span
-                className="text-[9px] px-1.5 py-0.5 rounded-full font-bold ml-0.5"
-                style={{
-                  background: activeTab === id ? "hsl(var(--primary))" : "hsl(var(--muted))",
-                  color: activeTab === id ? "#fff" : "hsl(var(--muted-foreground))",
-                }}
-              >
-                {count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Tab content ── */}
-      <div className="flex-1 overflow-y-auto pb-24">
-
-        {/* ── ELEMENTS ── */}
-        {activeTab === "elements" && (
-          <div className="px-3 sm:px-4 py-3 flex flex-col gap-2.5">
-
-            {/* Templates + Search row */}
-            <div className="flex items-center gap-2">
+      {/* ── Workspace ── */}
+      <div className="flex-1 flex overflow-hidden relative z-0">
+        
+        {/* 1. Sidenav Spacer & Hover Sidebar */}
+        <div className="w-[48px] flex-shrink-0 bg-card border-r border-border z-10" />
+        
+        <aside className="absolute left-0 top-0 bottom-0 w-[48px] hover:w-[200px] bg-card border-r border-border flex flex-col py-4 z-40 transition-[width] duration-300 ease-in-out group overflow-hidden shadow-none hover:shadow-xl">
+          <div className="flex flex-col gap-1 w-[200px]">
+            {([
+              { id: "elements" as Tab, icon: Layers,    label: "Elements" },
+              { id: "layout"   as Tab, icon: Settings2, label: "Layout" },
+              { id: "output"   as Tab, icon: AlignLeft, label: "Output" },
+            ]).map(({ id, icon: Icon, label }) => (
               <button
-                onClick={() => setShowPresets((p) => !p)}
-                className="flex-shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-semibold transition-all"
-                style={{
-                  background: showPresets ? "hsl(var(--primary))" : "hsl(var(--muted))",
-                  color: showPresets ? "#fff" : "hsl(var(--muted-foreground))",
-                }}
-                data-testid="button-presets"
+                key={id}
+                onClick={() => { setActiveTab(id); setSelectedElementId(null); }}
+                className={`w-full h-[40px] px-[14px] flex items-center gap-3 transition-all ${
+                  activeTab === id 
+                    ? "text-primary bg-primary/5 relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-5 before:bg-primary before:rounded-r-full" 
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                }`}
               >
-                <LayoutTemplate size={13} />
-                <span className="hidden sm:inline">Templates</span>
-                <span className="sm:hidden">Tmpl</span>
-              </button>
-
-              <div className="flex-1 relative">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search elements…"
-                  className="w-full pl-8 pr-8 py-2 text-xs rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  data-testid="input-search"
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X size={13} />
-                  </button>
-                )}
-              </div>
-
-              {/* Enable all / Disable all */}
-              {!search && (
-                <div className="flex-shrink-0 flex items-center gap-1">
-                  <button
-                    onClick={() => setAllEnabled(true)}
-                    title="Enable all elements"
-                    disabled={enabledCount === elementList.length}
-                    className="text-[10px] font-semibold px-2 py-1.5 rounded-lg transition-colors disabled:opacity-30"
-                    style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}
-                    data-testid="button-enable-all"
-                  >
-                    All On
-                  </button>
-                  <button
-                    onClick={() => setAllEnabled(false)}
-                    title="Disable all elements"
-                    disabled={enabledCount === 0}
-                    className="text-[10px] font-semibold px-2 py-1.5 rounded-lg transition-colors disabled:opacity-30"
-                    style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}
-                    data-testid="button-disable-all"
-                  >
-                    All Off
-                  </button>
-                </div>
-              )}
-
-              {/* Search result count */}
-              {search && filteredList.length > 0 && (
-                <span className="flex-shrink-0 text-[10px] font-semibold text-muted-foreground whitespace-nowrap">
-                  {filteredList.length}/{elementList.length}
+                <Icon size={18} className="flex-shrink-0" />
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap font-bold text-[14px]">
+                  {label}
                 </span>
-              )}
-            </div>
+              </button>
+            ))}
+          </div>
+          
+          <div className="w-5 h-[1px] bg-border my-2 mx-auto group-hover:w-[160px] transition-all duration-300" />
+          
+          <div className="flex flex-col gap-1 w-[200px] mt-auto">
+            <button 
+              onClick={() => {
+                if (confirm("Are you sure you want to start a new project? This will reset all current styling.")) {
+                  resetToDefault();
+                  setActiveTab("elements");
+                  setSelectedElementId(null);
+                }
+              }}
+              className="w-full h-[40px] px-[14px] flex items-center gap-3 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+            >
+              <Plus size={18} className="flex-shrink-0" />
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap font-bold text-[14px]">
+                New Project
+              </span>
+            </button>
+          </div>
+        </aside>
 
-            {/* Presets panel */}
-            {showPresets && (
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
-                  Document Templates
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {DOCUMENT_PRESETS.map((preset) => (
-                    <button
-                      key={preset.id}
-                      onClick={() => { applyPreset(preset.id); setShowPresets(false); }}
-                      className="flex items-start gap-3 p-3 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-primary/5 text-left transition-all"
-                      data-testid={`preset-${preset.id}`}
-                    >
-                      <span className="text-xl flex-shrink-0 mt-0.5">{preset.icon}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-foreground">{preset.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{preset.description}</p>
-                      </div>
+        {/* 2. List Panel */}
+        <div className="w-[280px] flex-shrink-0 bg-card flex flex-col border-r border-border z-20 relative">
+          
+          <div className="px-4 py-3 border-b border-border/50 shrink-0">
+             {activeTab === "elements" && <h2 className="text-[14px] font-bold text-foreground">Style Guide</h2>}
+             {activeTab === "layout" && <h2 className="text-[14px] font-bold text-foreground">Document Layout</h2>}
+             {activeTab === "output" && <h2 className="text-[14px] font-bold text-foreground">Export Options</h2>}
+          </div>
+
+          <div className="flex-1 overflow-y-auto no-scrollbar p-3">
+            {activeTab === "elements" && (
+              <div className="flex flex-col gap-2">
+                <div className="relative mb-2">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search elements…"
+                    className="w-full pl-9 pr-3 py-2.5 text-[12px] rounded-xl bg-muted/30 border-2 border-border/50 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50 transition-all"
+                  />
+                  {search && (
+                    <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-muted-foreground hover:bg-muted">
+                      <X size={12} />
                     </button>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <div 
+                    className={`flex items-center gap-3 px-3 py-3 rounded-2xl cursor-pointer transition-colors border-2 mb-3 ${
+                      selectedElementId === "global-colors" 
+                        ? "bg-primary/5 border-primary/30" 
+                        : "bg-card border-transparent hover:bg-muted/50"
+                    }`}
+                    onClick={() => setSelectedElementId("global-colors")}
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                      <Palette size={16} />
+                    </div>
+                    <span className={`flex-1 text-[14px] font-bold truncate ${selectedElementId === "global-colors" ? "text-primary" : "text-foreground"}`}>
+                      Color Style
+                    </span>
+                    <ChevronRight size={18} className={selectedElementId === "global-colors" ? "text-primary" : "text-muted-foreground"} />
+                  </div>
+
+                  {filteredList.map(el => (
+                    <CompactElementRow
+                      key={el.id}
+                      element={el}
+                      isSelected={selectedElementId === el.id}
+                      onClick={() => setSelectedElementId(el.id)}
+                      onToggleEnabled={updateElementEnabled}
+                    />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* No results */}
-            {filteredList.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No elements match "{search}"
+            {activeTab === "layout" && (
+              <div className="flex flex-col gap-6 px-1 py-2">
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Page Margins (mm)</h3>
+                  {(["marginTop","marginBottom","marginLeft","marginRight"] as const).map((key) => (
+                    <div key={key} className="flex flex-col gap-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[12px] font-bold text-foreground capitalize">{key.replace("margin","")}</span>
+                        <span className="text-[11px] font-mono font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">{state.layout[key]}</span>
+                      </div>
+                      <input type="range" min="5" max="60" step="1" value={state.layout[key]}
+                        onChange={(e) => updateLayout(key, Number(e.target.value))}
+                        className="w-full accent-primary h-1.5 rounded-full bg-muted appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:rounded-full" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Spacing</h3>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[12px] font-bold text-foreground">Line Spacing</span>
+                      <span className="text-[11px] font-mono font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">{state.layout.lineSpacing}×</span>
+                    </div>
+                    <input type="range" min="1.0" max="3.0" step="0.1" value={state.layout.lineSpacing}
+                      onChange={(e) => updateLayout("lineSpacing", Number(e.target.value))}
+                      className="w-full accent-primary h-1.5 rounded-full bg-muted appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:rounded-full" />
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[12px] font-bold text-foreground">Paragraph Spacing</span>
+                      <span className="text-[11px] font-mono font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">{state.layout.paragraphSpacing}px</span>
+                    </div>
+                    <input type="range" min="0" max="48" step="2" value={state.layout.paragraphSpacing}
+                      onChange={(e) => updateLayout("paragraphSpacing", Number(e.target.value))}
+                      className="w-full accent-primary h-1.5 rounded-full bg-muted appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:rounded-full" />
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Element list */}
-            {filteredList.map((el) => (
-              <ElementEditor
-                key={el.id}
-                element={el}
-                onToggleEnabled={updateElementEnabled}
-                onToggleAiDecide={updateElementAiDecide}
-                onToggleIfApplicable={updateElementIfApplicable}
-                onStyleChange={updateElementStyle}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* ── LAYOUT ── */}
-        {activeTab === "layout" && (
-          <div className="p-4 flex flex-col gap-6">
-
-            <section>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-primary/10 text-primary flex items-center justify-center text-[10px]">⬜</span>
-                Page Margins (mm)
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {(["marginTop","marginBottom","marginLeft","marginRight"] as const).map((key) => (
-                  <div key={key} className="flex flex-col gap-2">
-                    <div className="flex justify-between">
-                      <span className="text-xs font-semibold text-foreground capitalize">{key.replace("margin","")}</span>
-                      <span className="text-xs font-mono font-bold text-primary">{state.layout[key]}mm</span>
-                    </div>
-                    <input type="range" min="5" max="60" step="1" value={state.layout[key]}
-                      onChange={(e) => updateLayout(key, Number(e.target.value))}
-                      className="w-full accent-primary h-1.5 rounded-full" data-testid={`slider-${key}`} />
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-primary/10 text-primary flex items-center justify-center text-[10px]">↕</span>
-                Spacing
-              </h3>
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between">
-                    <span className="text-xs font-semibold text-foreground">Line Spacing</span>
-                    <span className="text-xs font-mono font-bold text-primary">{state.layout.lineSpacing}×</span>
-                  </div>
-                  <input type="range" min="1.0" max="3.0" step="0.1" value={state.layout.lineSpacing}
-                    onChange={(e) => updateLayout("lineSpacing", Number(e.target.value))}
-                    className="w-full accent-primary h-1.5 rounded-full" data-testid="slider-lineSpacing" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between">
-                    <span className="text-xs font-semibold text-foreground">Paragraph Spacing</span>
-                    <span className="text-xs font-mono font-bold text-primary">{state.layout.paragraphSpacing}px</span>
-                  </div>
-                  <input type="range" min="0" max="48" step="2" value={state.layout.paragraphSpacing}
-                    onChange={(e) => updateLayout("paragraphSpacing", Number(e.target.value))}
-                    className="w-full accent-primary h-1.5 rounded-full" data-testid="slider-paragraphSpacing" />
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-primary/10 text-primary flex items-center justify-center text-[10px]">↔</span>
-                Content Width
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {(["fixed","fluid"] as const).map((w) => (
-                  <button key={w} onClick={() => updateLayout("contentWidth", w)}
-                    className="flex flex-col items-center py-4 px-3 rounded-xl border-2 font-medium transition-all"
-                    style={{
-                      borderColor: state.layout.contentWidth === w ? "hsl(var(--primary))" : "hsl(var(--border))",
-                      background: state.layout.contentWidth === w ? "hsl(var(--primary) / 0.08)" : "hsl(var(--card))",
-                      color: state.layout.contentWidth === w ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-                    }}
-                    data-testid={`content-width-${w}`}>
-                    <span className="text-xl mb-1">{w === "fixed" ? "📏" : "↔"}</span>
-                    <span className="text-sm font-bold">{w === "fixed" ? "Fixed" : "Full Width"}</span>
-                    <span className="text-xs mt-0.5 opacity-70">{w === "fixed" ? "720px max" : "Fills container"}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          </div>
-        )}
-
-        {/* ── OUTPUT ── */}
-        {activeTab === "output" && (
-          <div className="p-4 flex flex-col gap-6">
-
-            <section>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Output Format</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {OUTPUT_FORMATS.map((fmt) => (
-                  <button key={fmt.value} onClick={() => setOutputFormat(fmt.value)}
-                    className="flex flex-col items-center py-4 px-3 rounded-xl border-2 transition-all"
-                    style={{
-                      borderColor: state.outputFormat === fmt.value ? "hsl(var(--primary))" : "hsl(var(--border))",
-                      background: state.outputFormat === fmt.value ? "hsl(var(--primary) / 0.08)" : "hsl(var(--card))",
-                    }}
-                    data-testid={`output-format-${fmt.value}`}>
-                    <span className="text-2xl mb-1.5">{fmt.icon}</span>
-                    <span className={`text-sm font-bold ${state.outputFormat === fmt.value ? "text-primary" : "text-foreground"}`}>
-                      {fmt.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground mt-0.5">{fmt.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Active Theme</h3>
-              <div className="rounded-xl border border-border bg-card p-4">
-                <p className="font-bold text-foreground">{COLOR_PALETTES[state.palette].label}</p>
-                <p className="text-xs text-muted-foreground mt-1">{COLOR_PALETTES[state.palette].description}</p>
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
-                Active Elements ({enabledCount})
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {elementList.filter((el) => el.enabled).map((el) => (
-                  <span key={el.id} className="text-xs px-2.5 py-1 rounded-full font-semibold"
-                    style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }}>
-                    {el.label}
-                  </span>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
-                Image Handling
-              </h3>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 text-xs font-medium">
-                  <input
-                    type="checkbox"
-                    id="include_images"
-                    checked={state.include_images ?? true}
-                    onChange={(e) => setIncludeImages(e.target.checked)}
-                    className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
-                  />
-                  <span>Include images from source document</span>
-                </label>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                When enabled, extracted image rules will be included in the generated prompt
-              </p>
-            </section>
-
-            {/* ── Advanced Prompt Options ── */}
-            <section>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Advanced Prompt Options</h3>
-              <div className="grid gap-4">
-                {/* Language & Direction */}
-                <div>
-                  <label className="block text-xs font-medium mb-1">Language & Direction</label>
-                  <select
-                    value={state.languageDirection}
-                    onChange={(e) => setLanguageDirection(e.target.value as LanguageDirection)}
-                    className="w-full text-xs p-1 border border-border rounded bg-background"
-                  >
-                    {LANG_DIRS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+            {activeTab === "output" && (
+              <div className="flex flex-col gap-6 px-1 py-2">
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Output Format</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {OUTPUT_FORMATS.map((fmt) => (
+                      <button key={fmt.value} onClick={() => setOutputFormat(fmt.value)}
+                        className="flex flex-col items-center py-4 px-2 rounded-2xl border-2 transition-all shadow-sm"
+                        style={{
+                          borderColor: state.outputFormat === fmt.value ? "hsl(var(--primary))" : "hsl(var(--border) / 0.5)",
+                          background: state.outputFormat === fmt.value ? "hsl(var(--primary) / 0.08)" : "hsl(var(--background))",
+                        }}>
+                        <span className="text-2xl mb-1">{fmt.icon}</span>
+                        <span className={`text-[12px] font-bold ${state.outputFormat === fmt.value ? "text-primary" : "text-foreground"}`}>
+                          {fmt.label}
+                        </span>
+                      </button>
                     ))}
-                  </select>
-                  <p className="text-xs text-muted-foreground mt-0.5">{LANG_DIRS.find(o=>o.value===state.languageDirection)?.desc}</p>
+                  </div>
                 </div>
 
-                {/* Content Integrity */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="content_integrity"
-                    checked={state.strictContentPreservation ?? true}
-                    onChange={(e) => setStrictContentPreservation(e.target.checked)}
-                    className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
-                  />
-                  <label htmlFor="content_integrity" className="text-xs font-medium">Strict content preservation (no fabrication)</label>
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Advanced Options</h3>
+                  <label className="flex items-start gap-3 text-[12px] font-bold cursor-pointer bg-muted/30 p-3 rounded-2xl border border-border/50 hover:bg-muted/50 transition-colors">
+                    <input type="checkbox" checked={state.include_images ?? true}
+                      onChange={(e) => setIncludeImages(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 text-primary rounded border-border focus:ring-primary accent-primary" />
+                    <span className="leading-tight">Include images from source</span>
+                  </label>
+                  <label className="flex items-start gap-3 text-[12px] font-bold cursor-pointer bg-muted/30 p-3 rounded-2xl border border-border/50 hover:bg-muted/50 transition-colors">
+                    <input type="checkbox" checked={state.strictContentPreservation ?? true}
+                      onChange={(e) => setStrictContentPreservation(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 text-primary rounded border-border focus:ring-primary accent-primary" />
+                    <span className="leading-tight">Strict content preservation</span>
+                  </label>
                 </div>
 
-                {/* Conflict Resolution */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="conflict_resolution"
-                    checked={state.conflictResolution ?? true}
-                    onChange={(e) => setConflictResolution(e.target.checked)}
-                    className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
-                  />
-                  <label htmlFor="conflict_resolution" className="text-xs font-medium">Include conflict resolution rules</label>
-                </div>
-
-                {/* Decision Rules for Optional Elements */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="decision_rules"
-                    checked={state.strictDecisionRules ?? true}
-                    onChange={(e) => setStrictDecisionRules(e.target.checked)}
-                    className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
-                  />
-                  <label htmlFor="decision_rules" className="text-xs font-medium">Add strict decision rules for optional elements</label>
+                <div className="mt-4">
+                  <button
+                    onClick={() => setShowPrompt((p) => !p)}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-extrabold text-[13px] text-white transition-all hover:opacity-90 active:scale-95 shadow-md"
+                    style={{ background: "linear-gradient(135deg, hsl(var(--primary)) 0%, #7c3aed 50%, #a855f7 100%)" }}
+                  >
+                    {showPrompt ? <Send size={14} /> : <Sparkles size={14} />}
+                    {showPrompt ? "Hide Prompt" : "Generate Prompt"}
+                  </button>
                 </div>
               </div>
-            </section>
-
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* ── Sticky Generate Prompt ── */}
-      <div
-        className="flex-shrink-0 border-t border-border bg-card px-4 pt-3 pb-3"
-        style={{ boxShadow: "0 -2px 12px rgba(0,0,0,0.06)" }}
-      >
-        <button
-          onClick={() => setShowPrompt((p) => !p)}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90 active:scale-[0.99]"
+        {/* 3. Edit Panel (Slides in) */}
+        <div 
+          className="absolute top-0 bottom-0 w-[300px] bg-card border-r border-border shadow-[4px_0_24px_rgba(0,0,0,0.08)] z-10 flex flex-col transition-transform duration-200 ease-out"
           style={{
-            background: "linear-gradient(135deg, hsl(var(--primary)) 0%, #4f46e5 100%)",
-            boxShadow: "0 4px 16px rgba(99,102,241,0.35)",
+            left: "328px", // 48 (sidenav) + 280 (list)
+            transform: (selectedElementId && activeTab === "elements") ? "translateX(0)" : "translateX(-100%)"
           }}
-          data-testid="button-generate-prompt"
         >
-          {showPrompt ? <Send size={16} /> : <Sparkles size={16} />}
-          {showPrompt ? "Hide Prompt" : "Generate AI Prompt"}
-        </button>
+          {selectedElementId === "global-colors" && activeTab === "elements" && (
+            <div className="flex flex-col h-full bg-card overflow-hidden">
+              <div className="flex items-center gap-3 px-4 py-4 border-b border-border/50 shrink-0">
+                <button onClick={() => setSelectedElementId(null)} className="p-1.5 rounded-xl border-2 border-border/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0">
+                  <ArrowLeft size={18} />
+                </button>
+                <span className="font-extrabold text-[16px] flex-1 text-foreground truncate">Color Style</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-5 no-scrollbar flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
+                  <div className="pb-1 border-b border-border/50">
+                    <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.15em]">Document Palettes</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(COLOR_PALETTES).map(([key, pal]) => {
+                      const bgColors: Record<string, string> = {
+                        default: "#5e39e0", ocean: "#0ea5e9", forest: "#10b981",
+                        sunset: "#f97316", monochrome: "#171717", pastel: "#f472b6"
+                      };
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => applyPalette(key as ColorPalette)}
+                          className="flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all shadow-sm hover:shadow"
+                          style={{
+                            borderColor: state.palette === key ? "hsl(var(--primary))" : "hsl(var(--border) / 0.5)",
+                            background: state.palette === key ? "hsl(var(--primary) / 0.05)" : "hsl(var(--card))",
+                          }}
+                        >
+                          <div className="w-8 h-8 rounded-full shadow-sm" style={{ background: bgColors[key] || "#5e39e0" }} />
+                          <span className={`text-[12px] font-bold ${state.palette === key ? "text-primary" : "text-foreground"}`}>
+                            {pal.label}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {selectedElement && activeTab === "elements" && (
+            <ElementEditPanel
+              element={selectedElement}
+              onClose={() => setSelectedElementId(null)}
+              onStyleChange={updateElementStyle}
+              onToggleAiDecide={updateElementAiDecide}
+              onToggleIfApplicable={updateElementIfApplicable}
+            />
+          )}
+        </div>
 
-        {showPrompt && (
-          <div className="mt-3">
-            <PromptOutput generatePrompt={generatePrompt} />
+        {/* 4. Canvas */}
+        <div 
+          className="flex-1 flex flex-col transition-all duration-200 ease-out bg-muted/10 relative z-0 h-full overflow-hidden"
+          style={{
+            marginLeft: (selectedElementId && activeTab === "elements") ? "300px" : "0"
+          }}
+        >
+          {/* Top Bar for Canvas (Removed as per requested, palette moved to Style Guide) */}
+          <div className="h-[44px] flex-shrink-0 bg-card border-b border-border px-6 flex justify-between items-center z-10">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Live Canvas Preview</span>
           </div>
-        )}
-      </div>
+          
+          <div className="flex-1 overflow-auto p-6 md:p-8 relative">
+             <div className="max-w-[1200px] mx-auto bg-card rounded-[2rem] shadow-xl border border-border/40 min-h-full p-0 overflow-hidden relative">
+               <div className="absolute inset-0 overflow-y-auto no-scrollbar">
+                 {showPrompt && activeTab === "output" ? (
+                   <div className="p-8">
+                     <PromptOutput generatePrompt={generatePrompt} />
+                   </div>
+                 ) : (
+                   <LivePreview state={state} />
+                 )}
+               </div>
+             </div>
+          </div>
 
-      <FloatingPreviewButton />
+        </div>
+
+      </div>
     </div>
   );
 }

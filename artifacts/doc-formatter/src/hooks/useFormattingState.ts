@@ -270,14 +270,30 @@ export function useFormattingState() {
         conditionalNote += `\n      ⚠ STRICT RULE: ${DECISION_RULES[el.id]}`;
       }
 
+      if (el.id === "divider") {
+        return (
+          `  - ${el.label}:${conditionalNote}\n` +
+          `      type: horizontal rule\n` +
+          `      color: ${s.borderColor}\n` +
+          `      thickness: ${s.borderWidth}\n` +
+          `      spacing: margin-top ${s.marginTop}, margin-bottom ${s.marginBottom}\n` +
+          `      implementation: HRFlowable(width="100%", thickness=${parseInt(s.borderWidth) || 1}, color=HexColor('${s.borderColor}'))`
+        );
+      }
+
+      let alignStr = s.textAlign === 'left' ? 'left (LTR) or right (RTL)' : s.textAlign;
+      if (el.id === "body") alignStr += " — NEVER TA_JUSTIFY";
+
       return (
         `  - ${el.label}:${conditionalNote}\n` +
         `      font: ${resolveFont(s.fontFamily)}, ${s.fontSize}, weight ${s.fontWeight}\n` +
         `      color: ${s.color}${s.backgroundColor !== "transparent" ? `, background: ${s.backgroundColor}` : ""}\n` +
-        `      alignment: ${s.textAlign}, line-height ${s.lineHeight}\n` +
+        `      alignment: ${alignStr}, line-height ${s.lineHeight}\n` +
         `      spacing: margin-bottom ${s.marginBottom}` +
         (s.paddingLeft !== "0px" ? `, padding-left ${s.paddingLeft}` : "") +
-        (s.borderWidth !== "0px" ? `\n      border: ${s.borderWidth} solid ${s.borderColor}, radius ${s.borderRadius}` : "")
+        (s.borderWidth !== "0px" ? `\n      border: ${s.borderWidth} solid ${s.borderColor}, radius ${s.borderRadius}` : "") +
+        (el.id === "table" ? `\n      header row: DVSans-Bold, background: #6366f1, color: #ffffff\n      colWidths: ALWAYS calculated from USABLE_WIDTH (see Rule 5)\n      Cell text: ALWAYS use Paragraph() objects — never plain strings` : "") +
+        (el.id === "numberedList" ? `\n      Implementation: ALWAYS use ListFlowable + ListItem (see Rule 4)` : "")
       );
     });
 
@@ -295,6 +311,17 @@ ${COLOR_PALETTES[state.palette].label} — ${COLOR_PALETTES[state.palette].descr
     const resolvedFont = resolveFont(bodyFontFamily);
 
     let reportlabRulesBlock = `## REPORTLAB PDF SPECIFIC RULES
+
+**Rule 0: Font path validation**
+Before registering fonts, verify the font directory exists:
+import os
+FONT_DIR = '/usr/share/fonts/truetype/dejavu/'
+if not os.path.exists(FONT_DIR):
+    raise FileNotFoundError(
+        f"Font directory not found: {FONT_DIR}\\n"
+        "Install with: sudo apt-get install fonts-dejavu"
+    )
+
 **Rule 1: Never use Unicode subscript or superscript characters**
 Built-in ReportLab fonts do NOT support Unicode subscript/superscript glyphs.
 They render as black squares ■.
@@ -313,6 +340,7 @@ especially on short lines. This looks broken and unprofessional.
 
 ❌ NEVER use: alignment=TA_JUSTIFY
 ✅ ALWAYS use: alignment=TA_LEFT  (or TA_CENTER for titles only)
+              alignment=TA_RIGHT  (for Arabic/RTL paragraphs only)
 
 **Rule 3: Never use ReportLab built-in fonts**
 Built-in fonts (Helvetica, Times-Roman, Courier) have broken kerning in ReportLab —
@@ -357,7 +385,7 @@ from reportlab.platypus import ListFlowable, ListItem
 
 def make_bullet_list(items, style):
     return ListFlowable(
-        [ListItem(Paragraph(item, style), leftIndent=20, bulletColor=HexColor('#c2410c'))
+        [ListItem(Paragraph(item, style), leftIndent=20, bulletColor=HexColor('#6366f1'))
          for item in items],
         bulletType='bullet',
         bulletFontName='DVSans',
@@ -366,6 +394,17 @@ def make_bullet_list(items, style):
         spaceBefore=4,
         spaceAfter=4,
     )
+
+For nested/sub-bullets, wrap inner items in a second ListFlowable:
+def make_nested_bullet_list(items_with_subitems, style, sub_style):
+    list_items = []
+    for item, subitems in items_with_subitems:
+        li_content = [Paragraph(item, style)]
+        if subitems:
+            li_content.append(make_bullet_list(subitems, sub_style))
+        list_items.append(ListItem(li_content, leftIndent=20))
+    return ListFlowable(list_items, bulletType='bullet',
+                        bulletFontName='DVSans', bulletFontSize=10, leftIndent=10)
 
 **Rule 5: Always calculate colWidths relative to usable page width**
 Never hardcode colWidths with fixed mm values that might exceed the page.
@@ -386,6 +425,11 @@ col_widths = [USABLE_WIDTH * 0.35, USABLE_WIDTH * 0.65]  # must sum to 1.0
 
 # For equal columns:
 col_widths = [USABLE_WIDTH / n] * n   # where n = number of columns
+
+# For wide tables: if the content would exceed USABLE_WIDTH,
+# wrap cell text using Paragraph() instead of plain strings,
+# and let ReportLab wrap the text inside the cell automatically.
+# Never let a table exceed USABLE_WIDTH.
 
 
 Apply all rules to every element in the document. No exceptions.`;
@@ -447,47 +491,83 @@ If any formatting rule conflicts with another, resolve it in this order:
       reportlabRulesBlock += `
 
 **Rule 6: Extract and embed images from the source document into the PDF**
-When the source document contains images, diagrams, charts, or flowcharts,
-extract them and embed them in the output PDF at the correct position.
+ONLY apply this rule if the source is a PDF or DOCX file path.
+If raw_text is plain text pasted directly → skip image extraction entirely.
 
-Steps:
-1. Extract images from the source file (PDF or DOCX):
-# For PDF source:
+If source is a file:
+1. Extract images from the source:
 import fitz  # PyMuPDF — install with: pip install pymupdf
 doc = fitz.open("source.pdf")
+seen_sizes = set()
 for page_num, page in enumerate(doc):
     for img_index, img in enumerate(page.get_images(full=True)):
         xref = img[0]
         base_image = doc.extract_image(xref)
         img_bytes = base_image["image"]
-        img_ext   = base_image["ext"]
-        img_path  = f"/tmp/extracted_img_{page_num}_{img_index}.{img_ext}"
+        # Skip tiny icons or artifacts (under 50x50 pixels)
+        if base_image["width"] < 50 or base_image["height"] < 50:
+            continue
+        # Skip duplicates by byte size
+        size_key = len(img_bytes)
+        if size_key in seen_sizes:
+            continue
+        seen_sizes.add(size_key)
+        img_ext  = base_image["ext"]
+        img_path = f"/tmp/extracted_img_{page_num}_{img_index}.{img_ext}"
         with open(img_path, "wb") as f:
             f.write(img_bytes)
 
-2. Embed images in the PDF at the right position using ReportLab:
+2. Embed at the correct position in the story:
 from reportlab.platypus import Image as RLImage
 
-def embed_image(img_path, max_width=None, max_height=None):
+def embed_image(img_path, max_width=None, max_height=400):
     if max_width is None:
         max_width = USABLE_WIDTH
     img = RLImage(img_path)
     w, h = img.imageWidth, img.imageHeight
-    scale = min(max_width / w, (max_height or h) / h)
+    # Scale down to fit — never upscale
+    scale = min(1.0, max_width / w, max_height / h)
     img.drawWidth  = w * scale
     img.drawHeight = h * scale
     return img
 
-# Then add to story at the correct position:
 story.append(embed_image("/tmp/extracted_img_0_0.png"))
-story.append(Spacer(1, 8))
-
-3. Skip extracted images that are:
-   - Smaller than 50x50 pixels (likely icons or artifacts)
-   - Duplicate of a previous image (same file size)
-
-Apply all rules to every element in the document. No exceptions.`;
+story.append(Spacer(1, 8))`;
     }
+
+    reportlabRulesBlock += `
+
+---
+
+**Rule 7: Arabic and RTL text rendering**
+ReportLab does NOT handle RTL or Arabic shaping natively.
+If the document contains Arabic text, apply these steps — otherwise skip entirely.
+
+Install required libraries:
+pip install arabic-reshaper python-bidi
+
+Import and define a reshaper function:
+import arabic_reshaper
+from bidi.algorithm import get_display
+
+def ar(text):
+    """Reshape and reorder Arabic text for correct RTL rendering in ReportLab."""
+    return get_display(arabic_reshaper.reshape(str(text)))
+
+Rules:
+- Wrap ALL Arabic strings with ar() before passing to Paragraph() or canvas.drawString()
+- Set alignment=TA_RIGHT on ALL Arabic ParagraphStyle definitions
+- For mixed Arabic/English paragraphs, wrap only the Arabic portions with ar()
+  and keep English terms as-is inline
+- For Arabic table cells, wrap each cell string with ar() and use TA_RIGHT alignment
+- For Arabic bullet lists, wrap each item string with ar() in make_bullet_list()
+
+Font note: DejaVu fonts have partial Arabic support.
+For full Arabic glyph coverage, register a dedicated Arabic TTF font:
+  Noto Naskh Arabic: /usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf
+  Amiri: download from https://www.amirifont.org/
+If no Arabic font is available, fall back to DVSans — it will render most Arabic glyphs
+but may have minor glyph issues.`;
 
     const elementsBlock = `## ELEMENT FORMATTING RULES
 NOTE: Elements marked with "⚠ IF APPLICABLE" should only be used when the raw text contains content that naturally suits them. Do NOT force or invent content to fill these elements — if no suitable content exists, skip them entirely.
@@ -500,9 +580,11 @@ ${styleLines.join("\n\n")}`;
 3. For elements marked "⚠ IF APPLICABLE": only use them if the content genuinely warrants it — never invent content to fill them
 4. Maintain proper hierarchy throughout the document
 5. Ensure consistent spacing and visual rhythm
-6. For elements marked as "AI decide", choose the most appropriate styling that fits the overall aesthetic
-7. Preserve all original content — do not summarize or omit anything
-8. Output the formatted document in ${outputFormat.toUpperCase()} format`;
+6. Preserve all original content — do not summarize or omit anything
+7. Output the formatted document as a complete, runnable Python script using ReportLab
+8. The script must run without errors and produce a valid ${outputFormat.toUpperCase()} file
+9. Follow ALL rules above — no exceptions
+10. Include error handling for missing fonts and resources to prevent silent crashes`;
 
     if (aiTool === "claude") {
       return `<system>

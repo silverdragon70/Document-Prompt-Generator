@@ -30,56 +30,55 @@ export function PromptOutput({ generatePrompt }: PromptOutputProps) {
     <div className="flex flex-col gap-3">
 
       {/* AI tool tabs */}
-      <div className="flex items-center gap-1 p-1 rounded-xl bg-muted">
+      <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-muted/60 border border-border/40">
         {AI_TOOLS.map((tool) => (
           <button
             key={tool.id}
             onClick={() => setActiveTool(tool.id)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all"
+            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-full text-[13px] font-bold transition-all"
             style={{
-              background: activeTool === tool.id ? "#ffffff" : "transparent",
+              background: activeTool === tool.id ? "hsl(var(--card))" : "transparent",
               color: activeTool === tool.id ? tool.color : "hsl(var(--muted-foreground))",
-              boxShadow: activeTool === tool.id ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
+              boxShadow: activeTool === tool.id ? "0 2px 10px rgba(0,0,0,0.1)" : "none",
             }}
             data-testid={`ai-tool-${tool.id}`}
           >
-            <span>{tool.icon}</span>
+            <span className="text-base">{tool.icon}</span>
             {tool.label}
           </button>
         ))}
       </div>
 
       {/* Header + Copy */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-muted-foreground">
-          Prompt optimized for{" "}
-          <span style={{ color: activeDef.color }} className="font-bold">{activeDef.label}</span>
+      <div className="flex items-center justify-between px-1 mt-2">
+        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+          Optimized for{" "}
+          <span style={{ color: activeDef.color }} className="font-black">{activeDef.label}</span>
         </p>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold transition-all"
+          className="flex items-center gap-2 text-xs px-4 py-2 rounded-full font-bold transition-all shadow-sm hover:shadow"
           style={{
-            background: copied ? "#dcfce7" : "hsl(var(--card))",
-            color: copied ? "#16a34a" : "hsl(var(--foreground))",
-            border: `1px solid ${copied ? "#86efac" : "hsl(var(--border))"}`,
+            background: copied ? "#10b981" : "hsl(var(--card))",
+            color: copied ? "#ffffff" : "hsl(var(--foreground))",
+            border: `2px solid ${copied ? "#10b981" : "hsl(var(--border) / 0.5)"}`,
           }}
           data-testid="button-copy-prompt"
         >
-          {copied ? <Check size={12} /> : <Copy size={12} />}
+          {copied ? <Check size={14} /> : <Copy size={14} />}
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
 
       {/* Prompt text */}
-      <div className="relative rounded-xl border border-border overflow-hidden"
-        style={{ background: "hsl(var(--muted) / 0.4)" }}>
-        <pre className="text-xs text-foreground/80 font-mono p-4 overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+      <div className="relative rounded-2xl border-2 border-border/50 bg-background shadow-sm overflow-hidden mt-1">
+        <pre className="text-[13px] text-foreground font-mono p-5 overflow-x-auto whitespace-pre-wrap leading-[1.6] max-h-72 overflow-y-auto no-scrollbar">
           {prompt}
         </pre>
       </div>
 
-      <p className="text-xs text-muted-foreground leading-relaxed">
-        Copy and paste into <span style={{ color: activeDef.color }} className="font-semibold">{activeDef.label}</span>, then add your raw text where indicated.
+      <p className="text-[11px] font-bold text-muted-foreground leading-relaxed px-1">
+        Copy and paste into <span style={{ color: activeDef.color }} className="font-black">{activeDef.label}</span>, then add your raw text where indicated.
       </p>
     </div>
   );
